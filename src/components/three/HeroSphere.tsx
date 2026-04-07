@@ -1,6 +1,6 @@
 import { useRef, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, MeshDistortMaterial } from '@react-three/drei';
+import { Float } from '@react-three/drei';
 import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
 import * as THREE from 'three';
 
@@ -24,7 +24,7 @@ function AnimatedTorusKnot({ mouse, scrollScale }: { mouse: React.MutableRefObje
 
   return (
     <Float speed={1.2} rotationIntensity={0.2} floatIntensity={1.2}>
-      <group ref={meshRef} scale={2.2}>
+      <group ref={meshRef as any} scale={2.2}>
         {/* Main torus knot */}
         <mesh>
           <torusKnotGeometry args={[0.8, 0.25, 200, 32, 2, 3]} />
@@ -136,7 +136,7 @@ export default function FixedHeroSphere() {
         >
           <Suspense fallback={null}>
             <Lights />
-            <AnimatedSphere mouse={mouse} scrollScale={scrollScaleRef} />
+            <AnimatedTorusKnot mouse={mouse} scrollScale={scrollScaleRef} />
             <ParticleField />
           </Suspense>
         </Canvas>
