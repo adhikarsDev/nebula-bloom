@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { SplineScene } from '@/components/ui/splite';
 
 export default function HeroSection() {
   return (
@@ -7,6 +8,14 @@ export default function HeroSection() {
       <div className="absolute inset-0">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/5 blur-[120px]" />
         <div className="absolute top-1/3 left-1/3 w-[400px] h-[400px] rounded-full bg-accent/5 blur-[100px]" />
+      </div>
+
+      {/* 3D Spline background */}
+      <div className="absolute inset-0 z-0">
+        <SplineScene
+          scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+          className="w-full h-full"
+        />
       </div>
 
       {/* Content overlay */}
