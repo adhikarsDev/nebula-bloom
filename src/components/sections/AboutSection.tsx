@@ -1,6 +1,5 @@
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
-import { SplineScene } from '@/components/ui/splite';
 
 const stats = [
   { value: '10B+', label: 'Parameters' },
@@ -19,14 +18,10 @@ export default function AboutSection() {
   return (
     <section ref={containerRef} className="section-padding relative min-h-screen flex items-center" id="about">
       <div className="max-w-7xl mx-auto w-full">
+        {/* RIGHT-aligned text, left side open for 3D object */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-          {/* Left side — 3D Spline object */}
-          <div className="hidden lg:flex items-center justify-center h-[600px]">
-            <SplineScene
-              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-              className="w-full h-full"
-            />
-          </div>
+          {/* Left side intentionally empty — 3D object shows through */}
+          <div className="hidden lg:block" />
 
           <motion.div ref={ref}>
             <div className="relative pl-8">
@@ -84,6 +79,7 @@ export default function AboutSection() {
               </div>
             </div>
           </motion.div>
+
         </div>
       </div>
     </section>

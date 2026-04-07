@@ -1,6 +1,5 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { SplineScene } from '@/components/ui/splite';
 
 const showcaseItems = [
   { title: 'Autonomous Agents', description: 'Self-directing AI entities that reason, plan, and execute complex tasks independently.' },
@@ -52,13 +51,8 @@ export default function ShowcaseSection() {
             </div>
           </div>
 
-          {/* Right side — 3D Spline object */}
-          <div className="hidden lg:flex items-center justify-center h-[600px]">
-            <SplineScene
-              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-              className="w-full h-full"
-            />
-          </div>
+          {/* Right side intentionally empty — 3D object shows through */}
+          <div className="hidden lg:block" />
         </div>
       </div>
     </section>
