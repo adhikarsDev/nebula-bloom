@@ -4,116 +4,95 @@ import { Float } from '@react-three/drei';
 import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
 import * as THREE from 'three';
 
-function AbstractRibbon({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number>; scrollX: React.MutableRefObject<number> }) {
+function CrystalPolyhedron({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number>; scrollX: React.MutableRefObject<number> }) {
   const groupRef = useRef<THREE.Group>(null);
-  const ribbonRef = useRef<THREE.Mesh>(null);
+  const innerRef = useRef<THREE.Mesh>(null);
+  const edgesRef = useRef<THREE.LineSegments>(null);
   const currentX = useRef(0);
 
-  const geometry = useMemo(() => {
-    const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-2, 0, 0),
-      new THREE.Vector3(-1, 1.2, 0.8),
-      new THREE.Vector3(0, -0.5, -0.6),
-      new THREE.Vector3(0.8, 1, 0.4),
-      new THREE.Vector3(1.5, -0.8, -0.3),
-      new THREE.Vector3(2, 0.3, 0.6),
-    ], true, 'catmullrom', 0.5);
-
-    const frames = curve.computeFrenetFrames(200, true);
-    const positions: number[] = [];
-    const indices: number[] = [];
-    const uvs: number[] = [];
-    const width = 0.35;
-    const segments = 200;
-    const twists = 3;
-
-    for (let i = 0; i <= segments; i++) {
-      const t = i / segments;
-      const point = curve.getPointAt(t);
-      const normal = frames.normals[Math.min(i, segments - 1)];
-      const binormal = frames.binormals[Math.min(i, segments - 1)];
-
-      const twistAngle = t * Math.PI * twists;
-      const cos = Math.cos(twistAngle);
-      const sin = Math.sin(twistAngle);
-
-      const dir = new THREE.Vector3()
-        .addScaledVector(normal, cos * width)
-        .addScaledVector(binormal, sin * width);
-
-      positions.push(point.x + dir.x, point.y + dir.y, point.z + dir.z);
-      positions.push(point.x - dir.x, point.y - dir.y, point.z - dir.z);
-
-      uvs.push(t, 0);
-      uvs.push(t, 1);
-
-      if (i < segments) {
-        const a = i * 2;
-        const b = i * 2 + 1;
-        const c = (i + 1) * 2;
-        const d = (i + 1) * 2 + 1;
-        indices.push(a, b, c);
-        indices.push(b, d, c);
-      }
-    }
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-    geo.setIndex(indices);
-    geo.computeVertexNormals();
-    return geo;
+  // Create icosahedron geometry for edges
+  const edgesGeo = useMemo(() => {
+    const ico = new THREE.IcosahedronGeometry(1, 0);
+    return new THREE.EdgesGeometry(ico);
   }, []);
 
   useFrame((state) => {
     if (!groupRef.current) return;
     const s = scrollScale.current;
     groupRef.current.scale.setScalar(s);
-    // Smooth lerp for horizontal position
     currentX.current += (scrollX.current - currentX.current) * 0.05;
     groupRef.current.position.x = currentX.current;
-    groupRef.current.rotation.x = state.clock.elapsedTime * 0.1 + mouse.current.y * 0.2;
-    groupRef.current.rotation.y = state.clock.elapsedTime * 0.15 + mouse.current.x * 0.2;
-    groupRef.current.rotation.z = state.clock.elapsedTime * 0.05;
+
+    const t = state.clock.elapsedTime;
+    groupRef.current.rotation.x = t * 0.08 + mouse.current.y * 0.2;
+    groupRef.current.rotation.y = t * 0.12 + mouse.current.x * 0.2;
+    groupRef.current.rotation.z = t * 0.04;
+
+    if (innerRef.current) {
+      innerRef.current.rotation.x = -t * 0.1;
+      innerRef.current.rotation.y = -t * 0.15;
+      innerRef.current.rotation.z = t * 0.06;
+    }
+
+    if (edgesRef.current) {
+      edgesRef.current.rotation.x = t * 0.05;
+      edgesRef.current.rotation.y = -t * 0.08;
+    }
   });
 
   return (
-    <Float speed={1.5} rotationIntensity={0.3} floatIntensity={1}>
+    <Float speed={1.2} rotationIntensity={0.25} floatIntensity={1.2}>
       <group ref={groupRef} scale={2.2}>
-        {/* Main ribbon - front */}
-        <mesh geometry={geometry}>
+        {/* Main crystal — outer shell */}
+        <mesh>
+          <icosahedronGeometry args={[1, 1]} />
           <meshPhysicalMaterial
-            color="#00c8ff"
-            emissive="#0040cc"
-            emissiveIntensity={0.6}
-            roughness={0.08}
+            color="#ff69b4"
+            emissive="#cc2277"
+            emissiveIntensity={0.5}
+            roughness={0.05}
+            metalness={0.95}
+            clearcoat={1}
+            clearcoatRoughness={0.02}
+            envMapIntensity={3}
+            transparent
+            opacity={0.75}
+            side={THREE.FrontSide}
+          />
+        </mesh>
+
+        {/* Inner crystal — smaller, rotated differently for depth */}
+        <mesh ref={innerRef} scale={0.6}>
+          <icosahedronGeometry args={[1, 0]} />
+          <meshPhysicalMaterial
+            color="#ff99cc"
+            emissive="#ff3388"
+            emissiveIntensity={0.7}
+            roughness={0.02}
             metalness={1}
             clearcoat={1}
-            clearcoatRoughness={0.05}
-            envMapIntensity={2.5}
-            side={THREE.FrontSide}
+            clearcoatRoughness={0.01}
             transparent
-            opacity={0.92}
+            opacity={0.6}
           />
         </mesh>
-        {/* Main ribbon - back */}
-        <mesh geometry={geometry}>
-          <meshPhysicalMaterial
-            color="#7c3aed"
-            emissive="#4c1d95"
-            emissiveIntensity={0.4}
-            roughness={0.12}
-            metalness={0.9}
-            clearcoat={0.8}
-            clearcoatRoughness={0.1}
-            side={THREE.BackSide}
-            transparent
-            opacity={0.85}
-          />
+
+        {/* Wireframe edges — outer facets */}
+        <lineSegments ref={edgesRef} scale={1.15}>
+          <bufferGeometry attach="geometry" {...edgesGeo} />
+          <lineBasicMaterial color="#ffb6d9" transparent opacity={0.35} />
+        </lineSegments>
+
+        {/* Outer glow shell */}
+        <mesh scale={1.2}>
+          <icosahedronGeometry args={[1, 1]} />
+          <meshBasicMaterial color="#ff88bb" transparent opacity={0.04} side={THREE.BackSide} />
         </mesh>
-        {/* Wireframe overlay */}
-        <mesh ref={ribbonRef} geometry={geometry}>
-          <meshBasicMaterial color="#00d4ff" wireframe transparent opacity={0.06} />
+
+        {/* Faint wireframe overlay on main shape */}
+        <mesh scale={1.01}>
+          <icosahedronGeometry args={[1, 1]} />
+          <meshBasicMaterial color="#ffaacc" wireframe transparent opacity={0.08} />
         </mesh>
       </group>
     </Float>
@@ -151,7 +130,7 @@ function ParticleField() {
           itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial size={0.012} color="#00d4ff" transparent opacity={0.5} sizeAttenuation />
+      <pointsMaterial size={0.012} color="#ff88bb" transparent opacity={0.45} sizeAttenuation />
     </points>
   );
 }
@@ -159,11 +138,11 @@ function ParticleField() {
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.12} />
-      <pointLight position={[5, 5, 5]} intensity={1.2} color="#00d4ff" />
-      <pointLight position={[-5, -3, 3]} intensity={0.7} color="#8b5cf6" />
-      <pointLight position={[0, 5, -5]} intensity={0.5} color="#06b6d4" />
-      <spotLight position={[0, 10, 0]} intensity={0.6} angle={0.3} penumbra={1} color="#00d4ff" />
+      <ambientLight intensity={0.15} />
+      <pointLight position={[5, 5, 5]} intensity={1.2} color="#ff69b4" />
+      <pointLight position={[-5, -3, 3]} intensity={0.7} color="#cc44aa" />
+      <pointLight position={[0, 5, -5]} intensity={0.5} color="#ff99cc" />
+      <spotLight position={[0, 10, 0]} intensity={0.6} angle={0.3} penumbra={1} color="#ff77bb" />
     </>
   );
 }
@@ -206,7 +185,7 @@ export default function FixedHeroSphere() {
         >
           <Suspense fallback={null}>
             <Lights />
-            <AbstractRibbon mouse={mouse} scrollScale={scrollScaleRef} scrollX={scrollXRef} />
+            <CrystalPolyhedron mouse={mouse} scrollScale={scrollScaleRef} scrollX={scrollXRef} />
             <ParticleField />
           </Suspense>
         </Canvas>
