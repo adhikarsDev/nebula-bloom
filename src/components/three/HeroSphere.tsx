@@ -4,60 +4,29 @@ import { Float } from '@react-three/drei';
 import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
 import * as THREE from 'three';
 
-function OrbitalRing({ radius, tubeRadius, rotation, color, speed, emissive }: { radius: number; tubeRadius: number; rotation: [number, number, number]; color: string; speed: number; emissive: string }) {
-  const ref = useRef<THREE.Mesh>(null);
-
-  useFrame((state) => {
-    if (ref.current) {
-      ref.current.rotation.z = state.clock.elapsedTime * speed;
-    }
-  });
-
+function SingleRing({ radius, tube, rotation, color, emissive }: { radius: number; tube: number; rotation: [number, number, number]; color: string; emissive: string }) {
   return (
-    <mesh ref={ref} rotation={rotation}>
-      <torusGeometry args={[radius, tubeRadius, 32, 120]} />
+    <mesh rotation={rotation}>
+      <torusGeometry args={[radius, tube, 48, 128]} />
       <meshPhysicalMaterial
         color={color}
         emissive={emissive}
-        emissiveIntensity={0.6}
-        roughness={0.1}
-        metalness={0.9}
+        emissiveIntensity={0.5}
+        roughness={0.08}
+        metalness={1}
         clearcoat={1}
-        clearcoatRoughness={0.05}
+        clearcoatRoughness={0.03}
+        envMapIntensity={2}
         transparent
-        opacity={0.85}
+        opacity={0.9}
       />
     </mesh>
   );
 }
 
-function ElectronDot({ orbitRadius, rotation, speed, phase }: { orbitRadius: number; rotation: [number, number, number]; speed: number; phase: number }) {
-  const ref = useRef<THREE.Mesh>(null);
+function OrbitalObject({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number>; scrollX: React.MutableRefObject<number> }) {
   const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (ref.current && groupRef.current) {
-      const t = state.clock.elapsedTime * speed + phase;
-      ref.current.position.x = Math.cos(t) * orbitRadius;
-      ref.current.position.y = Math.sin(t) * orbitRadius;
-      // Pulsing glow
-      const s = 0.08 + Math.sin(t * 2) * 0.02;
-      ref.current.scale.setScalar(s / 0.08);
-    }
-  });
-
-  return (
-    <group ref={groupRef} rotation={rotation}>
-      <mesh ref={ref}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshBasicMaterial color="#00ffcc" transparent opacity={0.95} />
-      </mesh>
-    </group>
-  );
-}
-
-function AtomStructure({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number>; scrollX: React.MutableRefObject<number> }) {
-  const groupRef = useRef<THREE.Group>(null);
+  const ringGroupRef = useRef<THREE.Group>(null);
   const currentX = useRef(0);
 
   useFrame((state) => {
@@ -68,72 +37,53 @@ function AtomStructure({ mouse, scrollScale, scrollX }: { mouse: React.MutableRe
     groupRef.current.position.x = currentX.current;
 
     const t = state.clock.elapsedTime;
-    groupRef.current.rotation.x = t * 0.05 + mouse.current.y * 0.15;
-    groupRef.current.rotation.y = t * 0.08 + mouse.current.x * 0.15;
-  });
+    groupRef.current.rotation.x = t * 0.06 + mouse.current.y * 0.12;
+    groupRef.current.rotation.y = t * 0.1 + mouse.current.x * 0.12;
 
-  const orbitRadius = 1.4;
+    if (ringGroupRef.current) {
+      ringGroupRef.current.rotation.z = t * 0.15;
+    }
+  });
 
   return (
     <Float speed={1} rotationIntensity={0.15} floatIntensity={0.8}>
       <group ref={groupRef} scale={2.2}>
-        {/* Core nucleus — glowing sphere */}
+        {/* Solid core sphere */}
         <mesh>
-          <sphereGeometry args={[0.18, 32, 32]} />
+          <sphereGeometry args={[0.45, 64, 64]} />
           <meshPhysicalMaterial
-            color="#00ffcc"
-            emissive="#00ddaa"
-            emissiveIntensity={1.5}
-            roughness={0}
-            metalness={0.5}
+            color="#00e0b0"
+            emissive="#009070"
+            emissiveIntensity={0.8}
+            roughness={0.04}
+            metalness={1}
             clearcoat={1}
+            clearcoatRoughness={0.02}
+            envMapIntensity={3}
           />
         </mesh>
-        {/* Core glow */}
-        <mesh scale={1.8}>
-          <sphereGeometry args={[0.18, 16, 16]} />
-          <meshBasicMaterial color="#00ffcc" transparent opacity={0.08} side={THREE.BackSide} />
+
+        {/* Core inner glow */}
+        <mesh scale={1.15}>
+          <sphereGeometry args={[0.45, 32, 32]} />
+          <meshBasicMaterial color="#00ffcc" transparent opacity={0.06} side={THREE.BackSide} />
         </mesh>
 
-        {/* Orbital ring 1 — horizontal-ish */}
-        <OrbitalRing
-          radius={orbitRadius}
-          tubeRadius={0.025}
-          rotation={[0.3, 0, 0]}
-          color="#00e6b8"
-          emissive="#008866"
-          speed={0.3}
-        />
+        {/* Single solid orbital ring */}
+        <group ref={ringGroupRef}>
+          <SingleRing
+            radius={1.1}
+            tube={0.045}
+            rotation={[Math.PI / 2.5, 0.3, 0]}
+            color="#00d4aa"
+            emissive="#007755"
+          />
+        </group>
 
-        {/* Orbital ring 2 — tilted */}
-        <OrbitalRing
-          radius={orbitRadius}
-          tubeRadius={0.025}
-          rotation={[1.2, 0.8, 0]}
-          color="#00ccaa"
-          emissive="#007755"
-          speed={-0.25}
-        />
-
-        {/* Orbital ring 3 — opposite tilt */}
-        <OrbitalRing
-          radius={orbitRadius}
-          tubeRadius={0.025}
-          rotation={[-0.6, 1.5, 0.3]}
-          color="#00ddbb"
-          emissive="#009977"
-          speed={0.35}
-        />
-
-        {/* Electrons orbiting along ring paths */}
-        <ElectronDot orbitRadius={orbitRadius} rotation={[0.3, 0, 0]} speed={0.8} phase={0} />
-        <ElectronDot orbitRadius={orbitRadius} rotation={[1.2, 0.8, 0]} speed={-0.7} phase={2} />
-        <ElectronDot orbitRadius={orbitRadius} rotation={[-0.6, 1.5, 0.3]} speed={0.9} phase={4} />
-
-        {/* Faint wireframe outer shell */}
-        <mesh scale={1.6}>
-          <icosahedronGeometry args={[1, 1]} />
-          <meshBasicMaterial color="#00ffcc" wireframe transparent opacity={0.04} />
+        {/* Outer subtle shell */}
+        <mesh scale={1.5}>
+          <sphereGeometry args={[1, 32, 32]} />
+          <meshBasicMaterial color="#00e0b0" transparent opacity={0.025} side={THREE.BackSide} />
         </mesh>
       </group>
     </Float>
@@ -141,7 +91,7 @@ function AtomStructure({ mouse, scrollScale, scrollX }: { mouse: React.MutableRe
 }
 
 function ParticleField() {
-  const count = 350;
+  const count = 300;
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -156,8 +106,8 @@ function ParticleField() {
 
   useFrame((state) => {
     if (ref.current) {
-      ref.current.rotation.y = state.clock.elapsedTime * 0.015;
-      ref.current.rotation.x = state.clock.elapsedTime * 0.008;
+      ref.current.rotation.y = state.clock.elapsedTime * 0.012;
+      ref.current.rotation.x = state.clock.elapsedTime * 0.006;
     }
   });
 
@@ -171,7 +121,7 @@ function ParticleField() {
           itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial size={0.012} color="#00e6b8" transparent opacity={0.4} sizeAttenuation />
+      <pointsMaterial size={0.01} color="#00d4aa" transparent opacity={0.35} sizeAttenuation />
     </points>
   );
 }
@@ -179,11 +129,11 @@ function ParticleField() {
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.1} />
-      <pointLight position={[5, 5, 5]} intensity={1} color="#00ffcc" />
-      <pointLight position={[-5, -3, 3]} intensity={0.6} color="#00aa88" />
+      <ambientLight intensity={0.12} />
+      <pointLight position={[5, 5, 5]} intensity={1.2} color="#00ffcc" />
+      <pointLight position={[-5, -3, 3]} intensity={0.5} color="#00aa88" />
       <pointLight position={[0, 5, -5]} intensity={0.4} color="#00ddbb" />
-      <spotLight position={[0, 10, 0]} intensity={0.5} angle={0.3} penumbra={1} color="#00ffcc" />
+      <spotLight position={[0, 10, 0]} intensity={0.5} angle={0.3} penumbra={1} color="#00e0b0" />
     </>
   );
 }
@@ -225,7 +175,7 @@ export default function FixedHeroSphere() {
         >
           <Suspense fallback={null}>
             <Lights />
-            <AtomStructure mouse={mouse} scrollScale={scrollScaleRef} scrollX={scrollXRef} />
+            <OrbitalObject mouse={mouse} scrollScale={scrollScaleRef} scrollX={scrollXRef} />
             <ParticleField />
           </Suspense>
         </Canvas>
