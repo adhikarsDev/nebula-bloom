@@ -1,7 +1,4 @@
 import { motion } from 'framer-motion';
-import { lazy, Suspense } from 'react';
-
-const HeroSphere = lazy(() => import('../three/HeroSphere'));
 
 export default function HeroSection() {
   return (
@@ -11,11 +8,6 @@ export default function HeroSection() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/5 blur-[120px]" />
         <div className="absolute top-1/3 left-1/3 w-[400px] h-[400px] rounded-full bg-accent/5 blur-[100px]" />
       </div>
-
-      {/* 3D Scene */}
-      <Suspense fallback={null}>
-        <HeroSphere />
-      </Suspense>
 
       {/* Content overlay */}
       <div className="relative z-10 text-center max-w-5xl mx-auto px-6">
