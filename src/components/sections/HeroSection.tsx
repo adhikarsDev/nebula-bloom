@@ -36,8 +36,8 @@ export default function HeroSection() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
-            We engineer next-generation AI systems that transcend conventional boundaries,
-            unlocking possibilities that were once beyond imagination.
+            Unlocking possibilities that were once beyond imagination
+            with AI systems that transcend conventional boundaries.
           </motion.p>
 
           <motion.div
@@ -48,9 +48,6 @@ export default function HeroSection() {
           >
             <button className="px-8 py-4 rounded-full bg-primary text-primary-foreground font-display font-semibold text-sm tracking-wider uppercase glow-box hover:scale-105 transition-transform duration-300">
               Explore Platform
-            </button>
-            <button className="px-8 py-4 rounded-full glow-border glass-surface text-foreground font-display font-semibold text-sm tracking-wider uppercase hover:scale-105 transition-transform duration-300">
-              Watch Demo
             </button>
           </motion.div>
         </motion.div>
