@@ -61,8 +61,8 @@ function DoubleHelix({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefO
         {/* Strand A */}
         <mesh geometry={strandA}>
           <meshPhysicalMaterial
-            color="#ffb020"
-            emissive="#cc6600"
+            color="#00e5ff"
+            emissive="#0066cc"
             emissiveIntensity={0.6}
             roughness={0.1}
             metalness={1}
@@ -76,8 +76,8 @@ function DoubleHelix({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefO
         {/* Strand B */}
         <mesh geometry={strandB}>
           <meshPhysicalMaterial
-            color="#ff6a00"
-            emissive="#993300"
+            color="#00b8d4"
+            emissive="#004466"
             emissiveIntensity={0.5}
             roughness={0.12}
             metalness={0.95}
@@ -91,8 +91,8 @@ function DoubleHelix({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefO
         {rungs.map((r, i) => (
           <mesh key={i} geometry={r.geo}>
             <meshPhysicalMaterial
-              color="#ffd700"
-              emissive="#aa7700"
+              color="#40e0ff"
+              emissive="#0088aa"
               emissiveIntensity={0.3}
               roughness={0.2}
               metalness={0.8}
@@ -103,7 +103,7 @@ function DoubleHelix({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefO
         ))}
         {/* Wireframe overlay strand A */}
         <mesh geometry={strandA}>
-          <meshBasicMaterial color="#ffd700" wireframe transparent opacity={0.08} />
+          <meshBasicMaterial color="#00e5ff" wireframe transparent opacity={0.08} />
         </mesh>
       </group>
     </Float>
@@ -136,7 +136,7 @@ function ParticleField() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial size={0.012} color="#ffb020" transparent opacity={0.45} sizeAttenuation />
+      <pointsMaterial size={0.012} color="#00e5ff" transparent opacity={0.45} sizeAttenuation />
     </points>
   );
 }
@@ -145,10 +145,10 @@ function Lights() {
   return (
     <>
       <ambientLight intensity={0.15} />
-      <pointLight position={[5, 5, 5]} intensity={1.2} color="#ffb020" />
-      <pointLight position={[-5, -3, 3]} intensity={0.7} color="#ff6a00" />
-      <pointLight position={[0, 5, -5]} intensity={0.5} color="#ffd700" />
-      <spotLight position={[0, 10, 0]} intensity={0.6} angle={0.3} penumbra={1} color="#ffb020" />
+      <pointLight position={[5, 5, 5]} intensity={1.2} color="#00e5ff" />
+      <pointLight position={[-5, -3, 3]} intensity={0.7} color="#00b8d4" />
+      <pointLight position={[0, 5, -5]} intensity={0.5} color="#40e0ff" />
+      <spotLight position={[0, 10, 0]} intensity={0.6} angle={0.3} penumbra={1} color="#00e5ff" />
     </>
   );
 }
