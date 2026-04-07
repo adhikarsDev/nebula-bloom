@@ -18,8 +18,11 @@ export default function AboutSection() {
   return (
     <section ref={containerRef} className="section-padding relative min-h-screen flex items-center" id="about">
       <div className="max-w-7xl mx-auto w-full">
-        {/* LEFT-aligned text, right side open for 3D object */}
+        {/* RIGHT-aligned text, left side open for 3D object */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          {/* Left side intentionally empty — 3D object shows through */}
+          <div className="hidden lg:block" />
+
           <motion.div ref={ref}>
             <div className="relative pl-8">
               {/* Animated vertical line */}
@@ -77,8 +80,6 @@ export default function AboutSection() {
             </div>
           </motion.div>
 
-          {/* Right side intentionally empty — 3D object shows through */}
-          <div className="hidden lg:block" />
         </div>
       </div>
     </section>
