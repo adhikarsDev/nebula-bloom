@@ -1,6 +1,7 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Brain, Zap, Shield, Layers } from 'lucide-react';
+import { SplineScene } from '@/components/ui/splite';
 
 const features = [
   {
@@ -57,8 +58,13 @@ export default function FeaturesSection() {
     <section className="section-padding relative min-h-screen flex items-center" id="features">
       <div className="max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-          {/* Left side intentionally empty — 3D object shows through */}
-          <div className="hidden lg:block" />
+          {/* Left side — 3D Spline object */}
+          <div className="hidden lg:flex items-center justify-center h-[600px]">
+            <SplineScene
+              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+              className="w-full h-full"
+            />
+          </div>
 
           {/* RIGHT-aligned content */}
           <div>
