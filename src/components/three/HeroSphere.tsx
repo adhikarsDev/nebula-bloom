@@ -4,16 +4,15 @@ import { Float } from '@react-three/drei';
 import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
 import * as THREE from 'three';
 
-function CrystalPolyhedron({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number>; scrollX: React.MutableRefObject<number> }) {
+function MorphingBlob({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number>; scrollX: React.MutableRefObject<number> }) {
   const groupRef = useRef<THREE.Group>(null);
-  const innerRef = useRef<THREE.Mesh>(null);
-  const edgesRef = useRef<THREE.LineSegments>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const wireRef = useRef<THREE.Mesh>(null);
   const currentX = useRef(0);
 
-  // Create icosahedron geometry for edges
-  const edgesGeo = useMemo(() => {
-    const ico = new THREE.IcosahedronGeometry(1, 0);
-    return new THREE.EdgesGeometry(ico);
+  const originalPositions = useMemo(() => {
+    const geo = new THREE.IcosahedronGeometry(1, 4);
+    return geo.attributes.position.array.slice();
   }, []);
 
   useFrame((state) => {
@@ -24,75 +23,72 @@ function CrystalPolyhedron({ mouse, scrollScale, scrollX }: { mouse: React.Mutab
     groupRef.current.position.x = currentX.current;
 
     const t = state.clock.elapsedTime;
-    groupRef.current.rotation.x = t * 0.08 + mouse.current.y * 0.2;
-    groupRef.current.rotation.y = t * 0.12 + mouse.current.x * 0.2;
-    groupRef.current.rotation.z = t * 0.04;
+    groupRef.current.rotation.x = t * 0.06 + mouse.current.y * 0.15;
+    groupRef.current.rotation.y = t * 0.1 + mouse.current.x * 0.15;
 
-    if (innerRef.current) {
-      innerRef.current.rotation.x = -t * 0.1;
-      innerRef.current.rotation.y = -t * 0.15;
-      innerRef.current.rotation.z = t * 0.06;
+    // Morph vertices
+    if (meshRef.current) {
+      const pos = meshRef.current.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const ox = originalPositions[i * 3];
+        const oy = originalPositions[i * 3 + 1];
+        const oz = originalPositions[i * 3 + 2];
+
+        const noise =
+          Math.sin(ox * 2.5 + t * 0.8) * 0.12 +
+          Math.sin(oy * 3.2 + t * 0.6) * 0.1 +
+          Math.sin(oz * 2.8 + t * 1.0) * 0.08 +
+          Math.sin((ox + oy) * 1.5 + t * 0.4) * 0.06;
+
+        const len = Math.sqrt(ox * ox + oy * oy + oz * oz);
+        const scale = 1 + noise;
+        pos.setXYZ(i, (ox / len) * scale, (oy / len) * scale, (oz / len) * scale);
+      }
+      pos.needsUpdate = true;
+      meshRef.current.geometry.computeVertexNormals();
     }
 
-    if (edgesRef.current) {
-      edgesRef.current.rotation.x = t * 0.05;
-      edgesRef.current.rotation.y = -t * 0.08;
+    // Sync wireframe
+    if (wireRef.current && meshRef.current) {
+      const src = meshRef.current.geometry.attributes.position;
+      const dst = wireRef.current.geometry.attributes.position;
+      for (let i = 0; i < src.count; i++) {
+        dst.setXYZ(i, src.getX(i), src.getY(i), src.getZ(i));
+      }
+      dst.needsUpdate = true;
     }
   });
 
   return (
-    <Float speed={1.2} rotationIntensity={0.25} floatIntensity={1.2}>
+    <Float speed={1} rotationIntensity={0.2} floatIntensity={0.8}>
       <group ref={groupRef} scale={2.2}>
-        {/* Main crystal — outer shell */}
-        <mesh>
-          <icosahedronGeometry args={[1, 1]} />
+        {/* Main morphing blob */}
+        <mesh ref={meshRef}>
+          <icosahedronGeometry args={[1, 4]} />
           <meshPhysicalMaterial
-            color="#ff69b4"
-            emissive="#cc2277"
+            color="#e8a830"
+            emissive="#b8660a"
             emissiveIntensity={0.5}
-            roughness={0.05}
-            metalness={0.95}
-            clearcoat={1}
-            clearcoatRoughness={0.02}
-            envMapIntensity={3}
-            transparent
-            opacity={0.75}
-            side={THREE.FrontSide}
-          />
-        </mesh>
-
-        {/* Inner crystal — smaller, rotated differently for depth */}
-        <mesh ref={innerRef} scale={0.6}>
-          <icosahedronGeometry args={[1, 0]} />
-          <meshPhysicalMaterial
-            color="#ff99cc"
-            emissive="#ff3388"
-            emissiveIntensity={0.7}
-            roughness={0.02}
+            roughness={0.06}
             metalness={1}
             clearcoat={1}
-            clearcoatRoughness={0.01}
+            clearcoatRoughness={0.03}
+            envMapIntensity={2.5}
             transparent
-            opacity={0.6}
+            opacity={0.88}
           />
         </mesh>
 
-        {/* Wireframe edges — outer facets */}
-        <lineSegments ref={edgesRef} scale={1.15}>
-          <bufferGeometry attach="geometry" {...edgesGeo} />
-          <lineBasicMaterial color="#ffb6d9" transparent opacity={0.35} />
-        </lineSegments>
-
-        {/* Outer glow shell */}
-        <mesh scale={1.2}>
-          <icosahedronGeometry args={[1, 1]} />
-          <meshBasicMaterial color="#ff88bb" transparent opacity={0.04} side={THREE.BackSide} />
+        {/* Wireframe overlay */}
+        <mesh ref={wireRef} scale={1.005}>
+          <icosahedronGeometry args={[1, 4]} />
+          <meshBasicMaterial color="#ffd080" wireframe transparent opacity={0.07} />
         </mesh>
 
-        {/* Faint wireframe overlay on main shape */}
-        <mesh scale={1.01}>
-          <icosahedronGeometry args={[1, 1]} />
-          <meshBasicMaterial color="#ffaacc" wireframe transparent opacity={0.08} />
+        {/* Outer glow */}
+        <mesh scale={1.3}>
+          <sphereGeometry args={[1, 32, 32]} />
+          <meshBasicMaterial color="#e8a830" transparent opacity={0.03} side={THREE.BackSide} />
         </mesh>
       </group>
     </Float>
@@ -130,7 +126,7 @@ function ParticleField() {
           itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial size={0.012} color="#ff88bb" transparent opacity={0.45} sizeAttenuation />
+      <pointsMaterial size={0.012} color="#e8a830" transparent opacity={0.4} sizeAttenuation />
     </points>
   );
 }
@@ -138,11 +134,11 @@ function ParticleField() {
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.15} />
-      <pointLight position={[5, 5, 5]} intensity={1.2} color="#ff69b4" />
-      <pointLight position={[-5, -3, 3]} intensity={0.7} color="#cc44aa" />
-      <pointLight position={[0, 5, -5]} intensity={0.5} color="#ff99cc" />
-      <spotLight position={[0, 10, 0]} intensity={0.6} angle={0.3} penumbra={1} color="#ff77bb" />
+      <ambientLight intensity={0.12} />
+      <pointLight position={[5, 5, 5]} intensity={1.3} color="#e8a830" />
+      <pointLight position={[-5, -3, 3]} intensity={0.6} color="#ff8c00" />
+      <pointLight position={[0, 5, -5]} intensity={0.5} color="#ffc060" />
+      <spotLight position={[0, 10, 0]} intensity={0.5} angle={0.3} penumbra={1} color="#e8a830" />
     </>
   );
 }
@@ -185,7 +181,7 @@ export default function FixedHeroSphere() {
         >
           <Suspense fallback={null}>
             <Lights />
-            <CrystalPolyhedron mouse={mouse} scrollScale={scrollScaleRef} scrollX={scrollXRef} />
+            <MorphingBlob mouse={mouse} scrollScale={scrollScaleRef} scrollX={scrollXRef} />
             <ParticleField />
           </Suspense>
         </Canvas>
