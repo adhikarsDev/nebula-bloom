@@ -176,7 +176,7 @@ export default function FixedHeroSphere() {
   const { scrollYProgress } = useScroll();
   const scale = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [2.2, 1.3, 1.0, 0.8]);
   const opacity = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], [1, 0.6, 0.4, 0.2]);
-  // Hero: center → Features (text right, 3D left) → Showcase (text left, 3D right) → About (text left, 3D right)
+  // Hero: center → Features (text right, 3D left) → Showcase (text left, 3D right) → About (text right, 3D left)
   const xPosition = useTransform(scrollYProgress, [0, 0.12, 0.2, 0.38, 0.48, 0.65, 0.75, 1], [0, 0, -3, -3, 3, 3, -3, -3]);
 
   useMotionValueEvent(scale, 'change', (v) => {
