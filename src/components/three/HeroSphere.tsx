@@ -4,9 +4,10 @@ import { Float } from '@react-three/drei';
 import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
 import * as THREE from 'three';
 
-function AbstractRibbon({ mouse, scrollScale }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number> }) {
+function AbstractRibbon({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number>; scrollX: React.MutableRefObject<number> }) {
   const groupRef = useRef<THREE.Group>(null);
   const ribbonRef = useRef<THREE.Mesh>(null);
+  const currentX = useRef(0);
 
   const geometry = useMemo(() => {
     const curve = new THREE.CatmullRomCurve3([
@@ -68,6 +69,9 @@ function AbstractRibbon({ mouse, scrollScale }: { mouse: React.MutableRefObject<
     if (!groupRef.current) return;
     const s = scrollScale.current;
     groupRef.current.scale.setScalar(s);
+    // Smooth lerp for horizontal position
+    currentX.current += (scrollX.current - currentX.current) * 0.05;
+    groupRef.current.position.x = currentX.current;
     groupRef.current.rotation.x = state.clock.elapsedTime * 0.1 + mouse.current.y * 0.2;
     groupRef.current.rotation.y = state.clock.elapsedTime * 0.15 + mouse.current.x * 0.2;
     groupRef.current.rotation.z = state.clock.elapsedTime * 0.05;
@@ -167,13 +171,20 @@ function Lights() {
 export default function FixedHeroSphere() {
   const mouse = useRef({ x: 0, y: 0 });
   const scrollScaleRef = useRef(2.2);
+  const scrollXRef = useRef(0);
 
   const { scrollYProgress } = useScroll();
   const scale = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [2.2, 1.3, 1.0, 0.8]);
-  const opacity = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], [1, 0.5, 0.3, 0.15]);
+  const opacity = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], [1, 0.6, 0.4, 0.2]);
+  // Hero: center → Features (text right, 3D left) → Showcase (text left, 3D right) → About (text left, 3D right)
+  const xPosition = useTransform(scrollYProgress, [0, 0.12, 0.2, 0.38, 0.48, 0.65, 0.75, 1], [0, 0, -3, -3, 3, 3, -3, -3]);
 
   useMotionValueEvent(scale, 'change', (v) => {
     scrollScaleRef.current = v;
+  });
+
+  useMotionValueEvent(xPosition, 'change', (v) => {
+    scrollXRef.current = v;
   });
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -195,7 +206,7 @@ export default function FixedHeroSphere() {
         >
           <Suspense fallback={null}>
             <Lights />
-            <AbstractRibbon mouse={mouse} scrollScale={scrollScaleRef} />
+            <AbstractRibbon mouse={mouse} scrollScale={scrollScaleRef} scrollX={scrollXRef} />
             <ParticleField />
           </Suspense>
         </Canvas>
