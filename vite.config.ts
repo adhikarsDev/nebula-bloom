@@ -4,7 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "/nebula-bloom/",   // 👈 ADD THIS LINE
+  base: "/nebula-bloom/",   
 
   server: {
     host: "::",
