@@ -4,32 +4,54 @@ import { Float, MeshDistortMaterial } from '@react-three/drei';
 import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
 import * as THREE from 'three';
 
-function AnimatedSphere({ mouse, scrollScale }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number> }) {
+function AnimatedTorusKnot({ mouse, scrollScale }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number> }) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const innerRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
     if (!meshRef.current) return;
     const s = scrollScale.current;
     meshRef.current.scale.setScalar(s);
-    meshRef.current.rotation.x = state.clock.elapsedTime * 0.15 + mouse.current.y * 0.3;
-    meshRef.current.rotation.y = state.clock.elapsedTime * 0.2 + mouse.current.x * 0.3;
+    meshRef.current.rotation.x = state.clock.elapsedTime * 0.12 + mouse.current.y * 0.25;
+    meshRef.current.rotation.y = state.clock.elapsedTime * 0.18 + mouse.current.x * 0.25;
+    meshRef.current.rotation.z = state.clock.elapsedTime * 0.05;
+
+    if (innerRef.current) {
+      innerRef.current.rotation.x = -state.clock.elapsedTime * 0.08;
+      innerRef.current.rotation.y = -state.clock.elapsedTime * 0.12;
+    }
   });
 
   return (
-    <Float speed={1.5} rotationIntensity={0.3} floatIntensity={1.5}>
-      <mesh ref={meshRef} scale={2.2}>
-        <icosahedronGeometry args={[1, 8]} />
-        <MeshDistortMaterial
-          color="#00d4ff"
-          emissive="#0066ff"
-          emissiveIntensity={0.4}
-          roughness={0.2}
-          metalness={0.8}
-          distort={0.35}
-          speed={2}
-          wireframe={false}
-        />
-      </mesh>
+    <Float speed={1.2} rotationIntensity={0.2} floatIntensity={1.2}>
+      <group ref={meshRef} scale={2.2}>
+        {/* Main torus knot */}
+        <mesh>
+          <torusKnotGeometry args={[0.8, 0.25, 200, 32, 2, 3]} />
+          <meshPhysicalMaterial
+            color="#00c8ff"
+            emissive="#0050dd"
+            emissiveIntensity={0.5}
+            roughness={0.1}
+            metalness={1}
+            clearcoat={1}
+            clearcoatRoughness={0.1}
+            envMapIntensity={2}
+            transparent
+            opacity={0.9}
+          />
+        </mesh>
+        {/* Inner wireframe knot for depth */}
+        <mesh ref={innerRef}>
+          <torusKnotGeometry args={[0.8, 0.26, 100, 16, 2, 3]} />
+          <meshBasicMaterial color="#00d4ff" wireframe transparent opacity={0.12} />
+        </mesh>
+        {/* Outer glow shell */}
+        <mesh scale={1.08}>
+          <torusKnotGeometry args={[0.8, 0.25, 80, 16, 2, 3]} />
+          <meshBasicMaterial color="#00aaff" transparent opacity={0.04} side={THREE.BackSide} />
+        </mesh>
+      </group>
     </Float>
   );
 }
