@@ -54,25 +54,33 @@ export default function FeaturesSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section className="section-padding relative" id="features">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          ref={ref}
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-20"
-        >
-          <p className="text-primary font-display text-sm tracking-[0.3em] uppercase mb-4">Capabilities</p>
-          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">
-            Built for the <span className="gradient-text">impossible</span>
-          </h2>
-        </motion.div>
+    <section className="section-padding relative min-h-screen flex items-center" id="features">
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          {/* Left side intentionally empty — 3D object shows through */}
+          <div className="hidden lg:block" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {features.map((feature, i) => (
-            <FeatureCard key={feature.title} feature={feature} index={i} />
-          ))}
+          {/* RIGHT-aligned content */}
+          <div>
+            <motion.div
+              ref={ref}
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8 }}
+              className="mb-12"
+            >
+              <p className="text-primary font-display text-sm tracking-[0.3em] uppercase mb-4">Capabilities</p>
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
+                Built for the <span className="gradient-text">impossible</span>
+              </h2>
+            </motion.div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {features.map((feature, i) => (
+                <FeatureCard key={feature.title} feature={feature} index={i} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
