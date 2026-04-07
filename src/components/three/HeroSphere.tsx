@@ -4,16 +4,61 @@ import { Float } from '@react-three/drei';
 import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
 import * as THREE from 'three';
 
-function MorphingBlob({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number>; scrollX: React.MutableRefObject<number> }) {
-  const groupRef = useRef<THREE.Group>(null);
-  const meshRef = useRef<THREE.Mesh>(null);
-  const wireRef = useRef<THREE.Mesh>(null);
-  const currentX = useRef(0);
+function OrbitalRing({ radius, tubeRadius, rotation, color, speed, emissive }: { radius: number; tubeRadius: number; rotation: [number, number, number]; color: string; speed: number; emissive: string }) {
+  const ref = useRef<THREE.Mesh>(null);
 
-  const originalPositions = useMemo(() => {
-    const geo = new THREE.IcosahedronGeometry(1, 4);
-    return geo.attributes.position.array.slice();
-  }, []);
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.rotation.z = state.clock.elapsedTime * speed;
+    }
+  });
+
+  return (
+    <mesh ref={ref} rotation={rotation}>
+      <torusGeometry args={[radius, tubeRadius, 32, 120]} />
+      <meshPhysicalMaterial
+        color={color}
+        emissive={emissive}
+        emissiveIntensity={0.6}
+        roughness={0.1}
+        metalness={0.9}
+        clearcoat={1}
+        clearcoatRoughness={0.05}
+        transparent
+        opacity={0.85}
+      />
+    </mesh>
+  );
+}
+
+function ElectronDot({ orbitRadius, rotation, speed, phase }: { orbitRadius: number; rotation: [number, number, number]; speed: number; phase: number }) {
+  const ref = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (ref.current && groupRef.current) {
+      const t = state.clock.elapsedTime * speed + phase;
+      ref.current.position.x = Math.cos(t) * orbitRadius;
+      ref.current.position.y = Math.sin(t) * orbitRadius;
+      // Pulsing glow
+      const s = 0.08 + Math.sin(t * 2) * 0.02;
+      ref.current.scale.setScalar(s / 0.08);
+    }
+  });
+
+  return (
+    <group ref={groupRef} rotation={rotation}>
+      <mesh ref={ref}>
+        <sphereGeometry args={[0.08, 16, 16]} />
+        <meshBasicMaterial color="#00ffcc" transparent opacity={0.95} />
+      </mesh>
+    </group>
+  );
+}
+
+function AtomStructure({ mouse, scrollScale, scrollX }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number>; scrollX: React.MutableRefObject<number> }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const currentX = useRef(0);
 
   useFrame((state) => {
     if (!groupRef.current) return;
@@ -23,72 +68,72 @@ function MorphingBlob({ mouse, scrollScale, scrollX }: { mouse: React.MutableRef
     groupRef.current.position.x = currentX.current;
 
     const t = state.clock.elapsedTime;
-    groupRef.current.rotation.x = t * 0.06 + mouse.current.y * 0.15;
-    groupRef.current.rotation.y = t * 0.1 + mouse.current.x * 0.15;
-
-    // Morph vertices
-    if (meshRef.current) {
-      const pos = meshRef.current.geometry.attributes.position;
-      for (let i = 0; i < pos.count; i++) {
-        const ox = originalPositions[i * 3];
-        const oy = originalPositions[i * 3 + 1];
-        const oz = originalPositions[i * 3 + 2];
-
-        const noise =
-          Math.sin(ox * 2.5 + t * 0.8) * 0.12 +
-          Math.sin(oy * 3.2 + t * 0.6) * 0.1 +
-          Math.sin(oz * 2.8 + t * 1.0) * 0.08 +
-          Math.sin((ox + oy) * 1.5 + t * 0.4) * 0.06;
-
-        const len = Math.sqrt(ox * ox + oy * oy + oz * oz);
-        const scale = 1 + noise;
-        pos.setXYZ(i, (ox / len) * scale, (oy / len) * scale, (oz / len) * scale);
-      }
-      pos.needsUpdate = true;
-      meshRef.current.geometry.computeVertexNormals();
-    }
-
-    // Sync wireframe
-    if (wireRef.current && meshRef.current) {
-      const src = meshRef.current.geometry.attributes.position;
-      const dst = wireRef.current.geometry.attributes.position;
-      for (let i = 0; i < src.count; i++) {
-        dst.setXYZ(i, src.getX(i), src.getY(i), src.getZ(i));
-      }
-      dst.needsUpdate = true;
-    }
+    groupRef.current.rotation.x = t * 0.05 + mouse.current.y * 0.15;
+    groupRef.current.rotation.y = t * 0.08 + mouse.current.x * 0.15;
   });
 
+  const orbitRadius = 1.4;
+
   return (
-    <Float speed={1} rotationIntensity={0.2} floatIntensity={0.8}>
+    <Float speed={1} rotationIntensity={0.15} floatIntensity={0.8}>
       <group ref={groupRef} scale={2.2}>
-        {/* Main morphing blob */}
-        <mesh ref={meshRef}>
-          <icosahedronGeometry args={[1, 4]} />
+        {/* Core nucleus — glowing sphere */}
+        <mesh>
+          <sphereGeometry args={[0.18, 32, 32]} />
           <meshPhysicalMaterial
-            color="#e8a830"
-            emissive="#b8660a"
-            emissiveIntensity={0.5}
-            roughness={0.06}
-            metalness={1}
+            color="#00ffcc"
+            emissive="#00ddaa"
+            emissiveIntensity={1.5}
+            roughness={0}
+            metalness={0.5}
             clearcoat={1}
-            clearcoatRoughness={0.03}
-            envMapIntensity={2.5}
-            transparent
-            opacity={0.88}
           />
         </mesh>
-
-        {/* Wireframe overlay */}
-        <mesh ref={wireRef} scale={1.005}>
-          <icosahedronGeometry args={[1, 4]} />
-          <meshBasicMaterial color="#ffd080" wireframe transparent opacity={0.07} />
+        {/* Core glow */}
+        <mesh scale={1.8}>
+          <sphereGeometry args={[0.18, 16, 16]} />
+          <meshBasicMaterial color="#00ffcc" transparent opacity={0.08} side={THREE.BackSide} />
         </mesh>
 
-        {/* Outer glow */}
-        <mesh scale={1.3}>
-          <sphereGeometry args={[1, 32, 32]} />
-          <meshBasicMaterial color="#e8a830" transparent opacity={0.03} side={THREE.BackSide} />
+        {/* Orbital ring 1 — horizontal-ish */}
+        <OrbitalRing
+          radius={orbitRadius}
+          tubeRadius={0.025}
+          rotation={[0.3, 0, 0]}
+          color="#00e6b8"
+          emissive="#008866"
+          speed={0.3}
+        />
+
+        {/* Orbital ring 2 — tilted */}
+        <OrbitalRing
+          radius={orbitRadius}
+          tubeRadius={0.025}
+          rotation={[1.2, 0.8, 0]}
+          color="#00ccaa"
+          emissive="#007755"
+          speed={-0.25}
+        />
+
+        {/* Orbital ring 3 — opposite tilt */}
+        <OrbitalRing
+          radius={orbitRadius}
+          tubeRadius={0.025}
+          rotation={[-0.6, 1.5, 0.3]}
+          color="#00ddbb"
+          emissive="#009977"
+          speed={0.35}
+        />
+
+        {/* Electrons orbiting along ring paths */}
+        <ElectronDot orbitRadius={orbitRadius} rotation={[0.3, 0, 0]} speed={0.8} phase={0} />
+        <ElectronDot orbitRadius={orbitRadius} rotation={[1.2, 0.8, 0]} speed={-0.7} phase={2} />
+        <ElectronDot orbitRadius={orbitRadius} rotation={[-0.6, 1.5, 0.3]} speed={0.9} phase={4} />
+
+        {/* Faint wireframe outer shell */}
+        <mesh scale={1.6}>
+          <icosahedronGeometry args={[1, 1]} />
+          <meshBasicMaterial color="#00ffcc" wireframe transparent opacity={0.04} />
         </mesh>
       </group>
     </Float>
@@ -96,7 +141,7 @@ function MorphingBlob({ mouse, scrollScale, scrollX }: { mouse: React.MutableRef
 }
 
 function ParticleField() {
-  const count = 400;
+  const count = 350;
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -126,7 +171,7 @@ function ParticleField() {
           itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial size={0.012} color="#e8a830" transparent opacity={0.4} sizeAttenuation />
+      <pointsMaterial size={0.012} color="#00e6b8" transparent opacity={0.4} sizeAttenuation />
     </points>
   );
 }
@@ -134,11 +179,11 @@ function ParticleField() {
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.12} />
-      <pointLight position={[5, 5, 5]} intensity={1.3} color="#e8a830" />
-      <pointLight position={[-5, -3, 3]} intensity={0.6} color="#ff8c00" />
-      <pointLight position={[0, 5, -5]} intensity={0.5} color="#ffc060" />
-      <spotLight position={[0, 10, 0]} intensity={0.5} angle={0.3} penumbra={1} color="#e8a830" />
+      <ambientLight intensity={0.1} />
+      <pointLight position={[5, 5, 5]} intensity={1} color="#00ffcc" />
+      <pointLight position={[-5, -3, 3]} intensity={0.6} color="#00aa88" />
+      <pointLight position={[0, 5, -5]} intensity={0.4} color="#00ddbb" />
+      <spotLight position={[0, 10, 0]} intensity={0.5} angle={0.3} penumbra={1} color="#00ffcc" />
     </>
   );
 }
@@ -151,7 +196,6 @@ export default function FixedHeroSphere() {
   const { scrollYProgress } = useScroll();
   const scale = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [2.2, 1.3, 1.0, 0.8]);
   const opacity = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], [1, 0.6, 0.4, 0.2]);
-  // Hero: center → Features (text right, 3D left) → Showcase (text left, 3D right) → About (text right, 3D left)
   const xPosition = useTransform(scrollYProgress, [0, 0.12, 0.2, 0.38, 0.48, 0.65, 0.75, 1], [0, 0, -3, -3, 3, 3, -3, -3]);
 
   useMotionValueEvent(scale, 'change', (v) => {
@@ -181,7 +225,7 @@ export default function FixedHeroSphere() {
         >
           <Suspense fallback={null}>
             <Lights />
-            <MorphingBlob mouse={mouse} scrollScale={scrollScaleRef} scrollX={scrollXRef} />
+            <AtomStructure mouse={mouse} scrollScale={scrollScaleRef} scrollX={scrollXRef} />
             <ParticleField />
           </Suspense>
         </Canvas>
