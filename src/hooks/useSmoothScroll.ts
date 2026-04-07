@@ -4,19 +4,24 @@ import Lenis from '@studio-freight/lenis';
 export function useSmoothScroll() {
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      duration: 0.85,
+      easing: (t: number) => 1 - Math.pow(1 - t, 3),
       smoothWheel: true,
+      wheelMultiplier: 0.7,
+      touchMultiplier: 1,
     });
 
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
+    let frameId = 0;
 
-    requestAnimationFrame(raf);
+    const raf = (time: number) => {
+      lenis.raf(time);
+      frameId = window.requestAnimationFrame(raf);
+    };
+
+    frameId = window.requestAnimationFrame(raf);
 
     return () => {
+      window.cancelAnimationFrame(frameId);
       lenis.destroy();
     };
   }, []);
