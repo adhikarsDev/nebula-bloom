@@ -16,10 +16,10 @@ export default function AboutSection() {
   const lineHeight = useTransform(scrollYProgress, [0.1, 0.6], ['0%', '100%']);
 
   return (
-    <section ref={containerRef} className="section-padding relative" id="about">
-      <div className="max-w-7xl mx-auto">
+    <section ref={containerRef} className="section-padding relative min-h-screen flex items-center" id="about">
+      <div className="max-w-7xl mx-auto w-full">
+        {/* LEFT-aligned text, right side open for 3D object */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-          {/* Left: animated line + text */}
           <motion.div ref={ref}>
             <div className="relative pl-8">
               {/* Animated vertical line */}
@@ -50,32 +50,35 @@ export default function AboutSection() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={isInView ? { opacity: 1, x: 0 } : {}}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="text-muted-foreground font-body text-lg leading-relaxed"
+                className="text-muted-foreground font-body text-lg leading-relaxed mb-10"
               >
                 We believe in building AI systems that amplify human potential.
                 Our research-driven approach combines cutting-edge algorithms
                 with responsible development practices, creating technology
                 that's powerful yet trustworthy.
               </motion.p>
+
+              {/* Stats inline */}
+              <div className="grid grid-cols-2 gap-4">
+                {stats.map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                    className="rounded-xl glass-surface gradient-border p-5 text-center"
+                  >
+                    <p className="font-display text-2xl md:text-3xl font-bold gradient-text mb-1">{stat.value}</p>
+                    <p className="text-muted-foreground font-body text-xs">{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.div>
 
-          {/* Right: stats grid */}
-          <div className="grid grid-cols-2 gap-6">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="rounded-2xl glass-surface gradient-border p-8 text-center"
-              >
-                <p className="font-display text-3xl md:text-4xl font-bold gradient-text mb-2">{stat.value}</p>
-                <p className="text-muted-foreground font-body text-sm">{stat.label}</p>
-              </motion.div>
-            ))}
-          </div>
+          {/* Right side intentionally empty — 3D object shows through */}
+          <div className="hidden lg:block" />
         </div>
       </div>
     </section>
