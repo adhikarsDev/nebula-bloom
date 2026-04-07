@@ -1,4 +1,4 @@
-import { useRef, useMemo, Suspense } from 'react';
+import { useRef, useMemo, useEffect, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float } from '@react-three/drei';
 import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
@@ -166,14 +166,18 @@ export default function FixedHeroSphere() {
   useMotionValueEvent(scale, 'change', (v) => { scrollScaleRef.current = v; });
   useMotionValueEvent(xPosition, 'change', (v) => { scrollXRef.current = v; });
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    mouse.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
-    mouse.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
-  };
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      mouse.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouse.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
 
   return (
     <motion.div className="fixed inset-0 z-0 pointer-events-none" style={{ opacity }}>
-      <div className="absolute inset-0 pointer-events-auto" onMouseMove={handleMouseMove}>
+      <div className="absolute inset-0">
         <Canvas camera={{ position: [0, 0, 6], fov: 45 }} dpr={[1, 2]} gl={{ antialias: true, alpha: true }} style={{ background: 'transparent' }}>
           <Suspense fallback={null}>
             <Lights />
