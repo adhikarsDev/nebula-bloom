@@ -1,13 +1,16 @@
 import { useRef, useMemo, Suspense } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, MeshDistortMaterial } from '@react-three/drei';
+import { useScroll, useTransform, motion, useMotionValueEvent } from 'framer-motion';
 import * as THREE from 'three';
 
-function AnimatedSphere({ mouse }: { mouse: React.MutableRefObject<{ x: number; y: number }> }) {
+function AnimatedSphere({ mouse, scrollScale }: { mouse: React.MutableRefObject<{ x: number; y: number }>; scrollScale: React.MutableRefObject<number> }) {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
     if (!meshRef.current) return;
+    const s = scrollScale.current;
+    meshRef.current.scale.setScalar(s);
     meshRef.current.rotation.x = state.clock.elapsedTime * 0.15 + mouse.current.y * 0.3;
     meshRef.current.rotation.y = state.clock.elapsedTime * 0.2 + mouse.current.x * 0.3;
   });
@@ -79,8 +82,18 @@ function Lights() {
   );
 }
 
-export default function HeroSphere() {
+export default function FixedHeroSphere() {
   const mouse = useRef({ x: 0, y: 0 });
+  const scrollScaleRef = useRef(2.2);
+
+  const { scrollYProgress } = useScroll();
+  // Scale from 2.2 (hero) down to 1.2 as user scrolls, and opacity fades slightly
+  const scale = useTransform(scrollYProgress, [0, 0.15, 0.8, 1], [2.2, 1.3, 1.0, 0.8]);
+  const opacity = useTransform(scrollYProgress, [0, 0.1, 0.85, 1], [1, 0.5, 0.3, 0.15]);
+
+  useMotionValueEvent(scale, 'change', (v) => {
+    scrollScaleRef.current = v;
+  });
 
   const handleMouseMove = (e: React.MouseEvent) => {
     mouse.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -88,19 +101,24 @@ export default function HeroSphere() {
   };
 
   return (
-    <div className="absolute inset-0" onMouseMove={handleMouseMove}>
-      <Canvas
-        camera={{ position: [0, 0, 6], fov: 45 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true }}
-        style={{ background: 'transparent' }}
-      >
-        <Suspense fallback={null}>
-          <Lights />
-          <AnimatedSphere mouse={mouse} />
-          <ParticleField />
-        </Suspense>
-      </Canvas>
-    </div>
+    <motion.div
+      className="fixed inset-0 z-0 pointer-events-none"
+      style={{ opacity }}
+    >
+      <div className="absolute inset-0 pointer-events-auto" onMouseMove={handleMouseMove}>
+        <Canvas
+          camera={{ position: [0, 0, 6], fov: 45 }}
+          dpr={[1, 2]}
+          gl={{ antialias: true, alpha: true }}
+          style={{ background: 'transparent' }}
+        >
+          <Suspense fallback={null}>
+            <Lights />
+            <AnimatedSphere mouse={mouse} scrollScale={scrollScaleRef} />
+            <ParticleField />
+          </Suspense>
+        </Canvas>
+      </div>
+    </motion.div>
   );
 }
